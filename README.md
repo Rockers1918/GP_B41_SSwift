@@ -61,7 +61,7 @@ If the user scores **5 or more**, the SwiftBot performs a special **celebration 
 - Java SDK (Standard Edition)  
 - SwiftBot API 
 - No external libraries unless included inside the ZIP submission  
-- Must compile and run successfully on Brunel University machines
+- Must compile and run successfully on BU machines
 
 ---
 
