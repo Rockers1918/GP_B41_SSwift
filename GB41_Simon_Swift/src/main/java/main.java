@@ -1,4 +1,5 @@
 import java.util.*;
+
 import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
@@ -36,7 +37,7 @@ public class main {
 			colours.add(random.nextInt(4));
 			DisplaySequence();
 			swiftBot.fillUnderlights(blank);
-
+			Scanner reader = new Scanner(System.in); // Reading from System.in
 			for (int i=0; i<level; ++i) {
 				if (!play) break;
 
@@ -59,7 +60,6 @@ public class main {
 					System.out.println("Too Slow!");
 					play = false;
 				}
-
 			}
 
 			//When sequence survived
@@ -67,6 +67,17 @@ public class main {
 				level++;
 				System.out.println("Correct! Next Round");
 				Thread.sleep(1000);
+			}
+			
+			if (level%5==0) {
+				System.out.println("Would you like to continue? (y/n): ");
+				String ans = reader.next();
+				if (ans=="y") {
+					break;
+				}
+				else if (ans=="n") {
+					
+				}
 			}
 		}
 	}
@@ -87,77 +98,38 @@ public class main {
 
 	public static void DisplaySequence() throws InterruptedException{
 		for (int i = 0; i < colours.size(); ++i) {
-            switch (colours.get(i)) {
-                case 0:
-                	swiftBot.setButtonLight(Button.A, true);
-                    lightUp(Underlight.MIDDLE_LEFT, red);
-                	swiftBot.setButtonLight(Button.A, false);
-                    break;
-                case 1:
-                	swiftBot.setButtonLight(Button.B, true);
-                    lightUp(Underlight.BACK_LEFT, blue);
-                	swiftBot.setButtonLight(Button.B, false);
-                    break;
-                case 2:             
-                	swiftBot.setButtonLight(Button.X, true);
-                	lightUp(Underlight.MIDDLE_RIGHT, green);
-                	swiftBot.setButtonLight(Button.X, false);
-                    break;
-                case 3:
-                	swiftBot.setButtonLight(Button.Y, true);
-                    lightUp(Underlight.BACK_RIGHT, yellow);
-                	swiftBot.setButtonLight(Button.Y, false);
-                    break;
+			switch (colours.get(i)) {
+			case 0:
+				swiftBot.setButtonLight(Button.A, true);
+				lightUp(Underlight.MIDDLE_LEFT, red);
+				swiftBot.setButtonLight(Button.A, false);
+				break;
+			case 1:
+				swiftBot.setButtonLight(Button.B, true);
+				lightUp(Underlight.BACK_LEFT, blue);
+				swiftBot.setButtonLight(Button.B, false);
+				break;
+			case 2:             
+				swiftBot.setButtonLight(Button.X, true);
+				lightUp(Underlight.MIDDLE_RIGHT, green);
+				swiftBot.setButtonLight(Button.X, false);
+				break;
+			case 3:
+				swiftBot.setButtonLight(Button.Y, true);
+				lightUp(Underlight.BACK_RIGHT, yellow);
+				swiftBot.setButtonLight(Button.Y, false);
+				break;
 			}
 		}
 	}
 
 	public static void lightUp(Underlight u, int[] color) throws InterruptedException {
-        swiftBot.setUnderlight(u, color);
-        Thread.sleep(800); // Light on time
-        swiftBot.setUnderlight(u, blank);
-        Thread.sleep(200); // Gap between lights
-    }
-/*
-	public static void CheckButtons(int i) { //Checking and Comparing Inputs
-		swiftBot.enableButton(Button.A,() -> {
-			if (colours.get(i)==0) {
-				incomplete = false;
-				++level;
-			}
-			else {
-				play = false;
-			}
-		});
-		swiftBot.enableButton(Button.B,() -> {
-			if (colours.get(i)==1) {
-				incomplete = false;
-				++level;
-			}
-			else {
-				play = false;
-			}
-		});
-		swiftBot.enableButton(Button.X,() -> {
-			if (colours.get(i)==2) {
-				incomplete = false;
-				++level;
-			}
-			else {
-				play = false;
-			}
-		});
-		swiftBot.enableButton(Button.Y,() -> {
-			if (colours.get(i)==3) {
-				incomplete = false;
-				++level;
-			}
-			else {
-				play = false;
-			}
-		});
+		swiftBot.setUnderlight(u, color);
+		Thread.sleep(800); // Light on time
+		swiftBot.setUnderlight(u, blank);
+		Thread.sleep(200); // Gap between lights
 	}
-*/
+
 	public static void DisplayLevel() {
 		System.out.println("Level "+level);
 	}
