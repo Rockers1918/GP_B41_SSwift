@@ -44,16 +44,17 @@ public class main {
 				final int expectedColor = colours.get(currentIndex);
 				incomplete = true;
 				long endtime = System.currentTimeMillis()+10_000;
-
+				// 1. ENABLE BUTTONS
 				swiftBot.enableButton(Button.A, () -> handleInput(0, expectedColor));
 				swiftBot.enableButton(Button.B, () -> handleInput(1, expectedColor));
 				swiftBot.enableButton(Button.X, () -> handleInput(2, expectedColor));
 				swiftBot.enableButton(Button.Y, () -> handleInput(3, expectedColor));
 
-				// waiting while time is left AND input is incomplete
+				// 2. waiting while time is left AND input is incomplete
 				while (System.currentTimeMillis()<endtime && incomplete) {
 					Thread.sleep(10);				
 				}
+				swiftBot.disableAllButtons();
 				if (incomplete && play) {
 					System.out.println("Too Slow!");
 					play = false;
@@ -88,16 +89,24 @@ public class main {
 		for (int i = 0; i < colours.size(); ++i) {
             switch (colours.get(i)) {
                 case 0:
+                	swiftBot.setButtonLight(Button.A, true);
                     lightUp(Underlight.MIDDLE_LEFT, red);
+                	swiftBot.setButtonLight(Button.A, false);
                     break;
                 case 1:
-                    lightUp(Underlight.MIDDLE_RIGHT, green);
-                    break;
-                case 2:
+                	swiftBot.setButtonLight(Button.B, true);
                     lightUp(Underlight.BACK_LEFT, blue);
+                	swiftBot.setButtonLight(Button.B, false);
+                    break;
+                case 2:             
+                	swiftBot.setButtonLight(Button.X, true);
+                	lightUp(Underlight.MIDDLE_RIGHT, green);
+                	swiftBot.setButtonLight(Button.X, false);
                     break;
                 case 3:
+                	swiftBot.setButtonLight(Button.Y, true);
                     lightUp(Underlight.BACK_RIGHT, yellow);
+                	swiftBot.setButtonLight(Button.Y, false);
                     break;
 			}
 		}
