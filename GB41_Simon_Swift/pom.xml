@@ -3,4 +3,21 @@
   <groupId>GB41_Simon_Swift</groupId>
   <artifactId>GB41_Simon_Swift</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  
+  <repositories>
+    <repository>
+        <id>reposilite-repository-releases</id>
+        <name>Swiftbot Maven</name>
+        <url>https://swiftbot-maven.brunel.ac.uk/releases</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>com.swiftbotlabs</groupId>
+        <artifactId>SwiftBot-API</artifactId>
+        <version>6.0.0</version>
+    </dependency>
+</dependencies>
+
 </project>
