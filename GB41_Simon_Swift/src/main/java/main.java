@@ -37,7 +37,7 @@ public class main {
 	public static void GameLogic() throws InterruptedException {
 		incomplete = false;
 		while (play) {
-			DisplayScoreboard();
+			displayScoreboard();
 			DisplayLevel();
 			colours.add(random.nextInt(4));
 			DisplaySequence();
@@ -140,7 +140,7 @@ public class main {
 	public static void DisplayLevel() {
 		System.out.println("Level "+level);
 	}
-	public static void DisplayScoreboard() {
+	public static void displayScoreboard() {
 	System.out.println("====================");
     System.out.println("Round: " + round);
     System.out.println("Score: " + score);
@@ -150,4 +150,5 @@ public static void incrementScore() {
 	score++;
 	System.out.println("+1 point! Total: " + score);
 }
+
 
