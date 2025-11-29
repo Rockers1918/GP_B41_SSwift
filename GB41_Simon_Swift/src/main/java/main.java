@@ -18,6 +18,10 @@ public class main {
 	static int[] yellow = {255, 255, 0};	
 	static int[] blank = {0, 0, 0};
 
+	static int score = 0;
+	static int round = 1;
+	static boolean userQuit = false;
+
 	public static void main(String[] args) throws InterruptedException {
 		swiftBot = SwiftBotAPI.INSTANCE;
 		System.out.println("Simon Says - Get Ready!");
@@ -33,6 +37,7 @@ public class main {
 	public static void GameLogic() throws InterruptedException {
 		incomplete = false;
 		while (play) {
+			DisplayScoreboard();
 			DisplayLevel();
 			colours.add(random.nextInt(4));
 			DisplaySequence();
@@ -64,6 +69,8 @@ public class main {
 
 			//When sequence survived
 			if (play) {
+				incrementScore();
+				round++;
 				level++;
 				System.out.println("Correct! Next Round");
 				Thread.sleep(1000);
@@ -133,6 +140,14 @@ public class main {
 	public static void DisplayLevel() {
 		System.out.println("Level "+level);
 	}
+	public static void DisplayScoreboard() {
+	System.out.println("====================");
+    System.out.println("Round: " + round);
+    System.out.println("Score: " + score);
+    System.out.println("====================");
 }
-
+public static void incrementScore() {
+	score++;
+	System.out.println("+1 point! Total: " + score);
+}
 
