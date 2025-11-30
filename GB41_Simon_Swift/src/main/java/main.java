@@ -133,6 +133,49 @@ public class main {
 	public static void DisplayLevel() {
 		System.out.println("Level "+level);
 	}
+
+	public static void celebrationDive(int score) throws InterruptedException { // input score
+		int speedPercent;
+		if (score < 5) speedPercent = 40;
+		else if (score >= 10) speedPercent = 100;
+		else speedPercent = score * 10;
+
+		Underlight[] leds = {
+			Underlight.FRONT_LEFT,
+			Underlight.FRONT_RIGHT,
+			Underlight.MIDDLE_LEFT,
+			Underlight.MIDDLE_RIGHT,
+		};
+
+		blinkRandom(leds);
+
+		int armLength = 30; // cm
+		
+		swiftBot.move(armLength, 30, speedPercent);  // right arm
+		swiftBot.turn(45, speedPercent);
+		swiftBot.move(armLength, 30, speedPercent);
+		swiftBot.turn(-45, speedPercent);
+		swiftBot.turn(-45, speedPercent);
+		swiftBot.move(armLength, 30, speedPercent);  // left arm
+		swiftBot.turn(45, speedPercent);
+		swiftBot.move(armLength, 30, speedPercent);
+
+		blinkRandom(leds);
+	}
+
+	public static void blinkRandom(Underlight[] leds) {
+		List<int[]> colours = new ArrayList<>(Arrays.asList(yellow, red, green, blue));
+		Collections.shuffle(colours); 
+
+		for (int[] c: colours) {
+			for (Underlight led: leds) {
+				swiftBot.setUnderlight(led, c);
+			}
+			Thread.sleep(500);
+		}
+
+		swiftBot.fillUnderlights(blank);
+	}
 }
 
 
