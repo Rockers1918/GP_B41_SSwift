@@ -9,6 +9,7 @@ public class main {
 	static ArrayList<Integer> colours = new ArrayList<Integer>();
 	static Random random = new Random();
 	static int level = 1;
+	static int lives = 3;
 	static volatile boolean play = true;
 	static volatile boolean incomplete;
 
@@ -90,9 +91,14 @@ public class main {
 			incomplete = false; // This breaks the waiting loop
 		} else {
 			// Wrong button
-			System.out.println("Wrong button!");
-			play = false;
+			lives--; //1 life lost
+			System.out.println("Wrong button! Lives remaining: " + lives);
 			incomplete = false; // Break the loop to end game
+			
+			if (lives < 1) {
+				System.out.println("Game Over!");
+				play = false;
+			}
 		}
 	}
 
@@ -131,7 +137,7 @@ public class main {
 	}
 
 	public static void DisplayLevel() {
-		System.out.println("Level "+level);
+		System.out.println("Level "+level+" | Lives "+lives);
 	}
 
 	public static void celebrationDive(int score) throws InterruptedException { // input score
