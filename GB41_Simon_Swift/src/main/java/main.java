@@ -3,7 +3,7 @@ import java.util.*;
 import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
-public class main {
+public class FormativeTask2 {
 	static SwiftBotAPI swiftBot;
 	// main resizable colours array
 	static ArrayList<Integer> colours = new ArrayList<Integer>();
@@ -63,23 +63,26 @@ public class main {
 			}
 
 			//When sequence survived
+
+
+			if (level%5==0 && level>0) {
+				System.out.println("Would you like to continue? (y/n): ");
+				String ans = reader.next();
+				if (ans.equals("y")) {
+					break;
+				}
+				else if (ans.equals("n")) {	
+					System.exit(5);
+				}
+			}
 			if (play) {
 				level++;
 				System.out.println("Correct! Next Round");
 				Thread.sleep(1000);
 			}
-			
-			if (level%5==0) {
-				System.out.println("Would you like to continue? (y/n): ");
-				String ans = reader.next();
-				if (ans=="y") {
-					break;
-				}
-				else if (ans=="n") {
-					
-				}
-			}
+
 		}
+		System.exit(5);
 	}
 
 	public static void handleInput(int pressedColor, int expectedColor) {
@@ -125,7 +128,7 @@ public class main {
 
 	public static void lightUp(Underlight u, int[] color) throws InterruptedException {
 		swiftBot.setUnderlight(u, color);
-		Thread.sleep(800); // Light on time
+		Thread.sleep(700); // Light on time
 		swiftBot.setUnderlight(u, blank);
 		Thread.sleep(200); // Gap between lights
 	}
@@ -133,7 +136,7 @@ public class main {
 	public static void DisplayLevel() {
 		System.out.println("Level "+level);
 	}
-
+	
 	public static void celebrationDive(int score) throws InterruptedException { // input score
 		int speedPercent;
 		if (score < 5) speedPercent = 40;
@@ -177,5 +180,6 @@ public class main {
 		swiftBot.fillUnderlights(blank);
 	}
 }
+
 
 
