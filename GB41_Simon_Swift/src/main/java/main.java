@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
@@ -11,6 +12,7 @@ import java.util.Scanner;
 public class main {
 
 	public static SwiftBotAPI swiftBot = SwiftBotAPI.INSTANCE;
+	public static Scoreboard scoreboard = new Scoreboard();
 
 	public static void main(String[] args) throws InterruptedException {
 
@@ -31,16 +33,31 @@ public class main {
 
 				swiftBot.fillUnderlights(Display.blank);
 				ui.finalScore(game.getLevel() - 1);
+				System.out.print("Enter your name: ");
+				Scanner sc = new Scanner(System.in);
+				String name = sc.nextLine();
+
+				main.scoreboard.saveScore(name, game.getLevel() - 1);
+				ui.askContinue();
+				Utility.clearConsole();
 				break;
 
 			case 2: // Scoreboard
-				ui.scoreboardNotImplemented();
+				Utility.clearConsole();
+				ui.showTitle();
+			    main.scoreboard.show();
 				Thread.sleep(1000);
+				ui.askContinue();
+				Utility.clearConsole();
 				break;
 
 			case 3: // Settings
+				Utility.clearConsole();
+				ui.showTitle();
 				ui.settingsNotImplemented();
 				Thread.sleep(1000);
+				ui.askContinue();
+				Utility.clearConsole();
 				break;
 
 			case 4: // Quit
@@ -52,6 +69,7 @@ public class main {
 			default:
 				ui.invalidOption();
 				Thread.sleep(1000);
+				Utility.clearConsole();
 			}
 		}
 	}
@@ -87,7 +105,9 @@ class GameLogic {
 		incomplete = false;
 
 		while (play) {
-
+			
+			Utility.clearConsole();
+			ui.showTitle();
 			ui.showLevelandLives(level,lives);
 
 			colours.add(random.nextInt(4));
@@ -226,6 +246,26 @@ class CLI {
 	private Scanner scanner = new Scanner(System.in);
 
 	public int showMenu() {
+	    this.showTitle();
+	    System.out.println("              1) Play");
+	    System.out.println("              2) Scoreboard");
+	    System.out.println("              3) Settings");
+	    System.out.println("              4) Quit");
+	    System.out.println("========================================");
+	    System.out.print("Select an option: ");
+
+	    int choice = -1;
+	    if (scanner.hasNextInt()) {
+	        choice = scanner.nextInt();
+	        scanner.nextLine(); // consume the newline
+	    } else {
+	        scanner.nextLine(); // **consume invalid input**
+	    }
+	    return choice;
+	}
+
+	
+	public void showTitle() {
 		System.out.println("========================================");
 		System.out.println("         ____  _                         ");
 		System.out.println("        / ___|(_)_ __ ___   ___ _ __     ");
@@ -235,19 +275,6 @@ class CLI {
 		System.out.println();
 		System.out.println("           S I M O N   S W I F T          ");
 		System.out.println("========================================");
-		System.out.println("              1) Play");
-		System.out.println("              2) Scoreboard");
-		System.out.println("              3) Settings");
-		System.out.println("              4) Quit");
-		System.out.println("========================================");
-		System.out.print("Select an option: ");
-
-		int choice = -1;
-		if (scanner.hasNextInt()) {
-			choice = scanner.nextInt();
-			scanner.nextLine();
-		}
-		return choice;
 	}
 
 	public void showWelcome() {
@@ -285,7 +312,7 @@ class CLI {
 	}
 
 	public boolean askContinue() {
-		System.out.print("Continue? (y/n): ");
+		System.out.print("Would You Like To Continue? (Y/N): ");
 		String ans = scanner.nextLine();
 		return ans.equalsIgnoreCase("y");
 	}
@@ -301,10 +328,6 @@ class CLI {
 		System.out.println("Settings not implemented yet!");
 	}
 
-	public void scoreboardNotImplemented() {
-		System.out.println("Scoreboard not implemented yet!");
-	}
-
 	public void goodbye() {
 		System.out.println("Goodbye!");
 	}
@@ -313,3 +336,92 @@ class CLI {
 		System.out.println("Invalid option! Try again.");
 	}
 }
+	
+// =========================
+// SCOREBOARD CLASS
+// =========================
+class Scoreboard {
+
+    private static final String FILE_NAME = "scoreboard.txt";
+
+    // Saves a new score
+    public void saveScore(String name, int score) {
+        try (FileWriter fw = new FileWriter(FILE_NAME, true)) {
+            fw.write(name + " - " + score + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    
+    // Displays the scoreboard
+    public void show() {
+    	
+        System.out.println("\n================== SCOREBOARD ==================");
+
+        File file = new File(FILE_NAME);
+        if (!file.exists()) {
+            System.out.println("No scores yet!");
+            return;
+        }
+
+        // Read all scores into a list
+        ArrayList<PlayerScore> scores = new ArrayList<>();
+        try (Scanner sc = new Scanner(file)) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                String[] parts = line.split(" - ");
+                if (parts.length == 2) {
+                    String name = parts[0];
+                    int score = Integer.parseInt(parts[1].trim());
+                    scores.add(new PlayerScore(name, score));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Sort scores descending
+        scores.sort((a, b) -> b.score - a.score);
+
+        // Print table header
+        System.out.printf("%-4s | %-20s | %s%n", "Rank", "Player Name", "Score");
+        System.out.println("----------+---------------------------+------------");
+
+        // Print top scores
+        int rank = 1;
+        for (PlayerScore ps : scores) {
+            System.out.printf("%-4d | %-20s | %d%n", rank, ps.name, ps.score);
+            rank++;
+        }
+
+        System.out.println("==================================\n");
+    }
+
+    // Private Class which stores player and score
+    private static class PlayerScore {
+        String name;
+        int score;
+
+        PlayerScore(String name, int score) {
+            this.name = name;
+            this.score = score;
+        }
+    }
+
+    
+}
+
+//=========================
+//UTILITY CLASS
+//=========================
+
+class Utility {
+	
+	public static void clearConsole() {
+	    System.out.print("\033[H\033[2J");
+	    System.out.flush();
+	}
+}
+	
+
