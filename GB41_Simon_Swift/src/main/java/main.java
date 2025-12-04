@@ -3,7 +3,7 @@ import java.util.*;
 import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
-public class FormativeTask2 {
+public class main {
 	static SwiftBotAPI swiftBot;
 	// main resizable colours array
 	static ArrayList<Integer> colours = new ArrayList<Integer>();
@@ -180,6 +180,7 @@ public class FormativeTask2 {
 		swiftBot.fillUnderlights(blank);
 	}
 }
+
 
 
 
