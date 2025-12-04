@@ -1,190 +1,312 @@
 import java.util.*;
-
 import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
-public class main {
-	static SwiftBotAPI swiftBot;
-	// main resizable colours array
-	static ArrayList<Integer> colours = new ArrayList<Integer>();
-	static Random random = new Random();
-	static int level = 1;
-	static volatile boolean play = true;
-	static volatile boolean incomplete;
-
-	static int[] red = {255, 0, 0};
-	static int[] green = {0, 255, 0};
-	static int[] blue = {0, 0, 255};
-	static int[] yellow = {255, 255, 0};	
-	static int[] blank = {0, 0, 0};
-
-	public static void main(String[] args) throws InterruptedException {
-		swiftBot = SwiftBotAPI.INSTANCE;
-		System.out.println("Simon Says - Get Ready!");
-		swiftBot.fillUnderlights(blank);
-
-		GameLogic();
-
-		swiftBot.fillUnderlights(blank);
-		System.out.println();
-		System.out.println("Final Round: " + level + "             |             Final Score: " + (level-1));
-		//blinkRandom();
-		celebrationDive(level-1);
-	}
+import java.util.Scanner;
 
 
-	public static void GameLogic() throws InterruptedException {
-		incomplete = false;
-		while (play) {
-			DisplayLevel();
-			colours.add(random.nextInt(4));
-			DisplaySequence();
-			swiftBot.fillUnderlights(blank);
-			Scanner reader = new Scanner(System.in); // Reading from System.in
-			for (int i=0; i<level; ++i) {
-				if (!play) break;
+// =========================
+// MAIN CLASS
+// =========================
+public class Main {
 
-				final int currentIndex = i;  // Fix lambda capture
-				final int expectedColor = colours.get(currentIndex);
-				incomplete = true;
-				long endtime = System.currentTimeMillis()+10_000;
-				// 1. ENABLE BUTTONS
-				swiftBot.enableButton(Button.A, () -> handleInput(0, expectedColor));
-				swiftBot.enableButton(Button.B, () -> handleInput(1, expectedColor));
-				swiftBot.enableButton(Button.X, () -> handleInput(2, expectedColor));
-				swiftBot.enableButton(Button.Y, () -> handleInput(3, expectedColor));
+    public static SwiftBotAPI swiftBot = SwiftBotAPI.INSTANCE;
 
-				// 2. waiting while time is left AND input is incomplete
-				while (System.currentTimeMillis()<endtime && incomplete) {
-					Thread.sleep(10);				
-				}
-				swiftBot.disableAllButtons();
-				if (incomplete && play) {
-					System.out.println("Too Slow!");
-					play = false;
-				}
-			}
+    public static void main(String[] args) throws InterruptedException {
 
-			//When sequence survived
+        System.setProperty("file.encoding", "UTF-8");
+        CLI ui = new CLI();
 
+        boolean running = true;
 
-			if (level%5==0 && level>0) {
-				System.out.println("Would you like to continue? (y/n): ");
-				String ans = reader.next();
-				if (ans.equals("y")) {
-					break;
-				}
-				else if (ans.equals("n")) {	
-					System.exit(5);
-				}
-			}
-			if (play) {
-				level++;
-				System.out.println("Correct! Next Round");
-				Thread.sleep(1000);
-			}
+        while (running) {
+            int choice = ui.showMenu();
 
-		}
-		System.exit(5);
-	}
+            switch (choice) {
+                case 1: // Play
+                    swiftBot.fillUnderlights(Display.blank);
 
-	public static void handleInput(int pressedColor, int expectedColor) {
-		if (!incomplete) return; // Ignore extra clicks if already processed
+                    GameLogic game = new GameLogic(swiftBot, ui);
+                    game.start();
 
-		if (pressedColor == expectedColor) {
-			// Correct button
-			incomplete = false; // This breaks the waiting loop
-		} else {
-			// Wrong button
-			System.out.println("Game Over!");
-			play = false;
-			incomplete = false; // Break the loop to end game
-		}
-	}
+                    swiftBot.fillUnderlights(Display.blank);
+                    ui.finalScore(game.getLevel() - 1);
+                    break;
 
-	public static void DisplaySequence() throws InterruptedException{
-		for (int i = 0; i < colours.size(); ++i) {
-			switch (colours.get(i)) {
-			case 0:
-				swiftBot.setButtonLight(Button.A, true);
-				lightUp(Underlight.MIDDLE_LEFT, red);
-				swiftBot.setButtonLight(Button.A, false);
-				break;
-			case 1:
-				swiftBot.setButtonLight(Button.B, true);
-				lightUp(Underlight.BACK_LEFT, blue);
-				swiftBot.setButtonLight(Button.B, false);
-				break;
-			case 2:             
-				swiftBot.setButtonLight(Button.X, true);
-				lightUp(Underlight.MIDDLE_RIGHT, green);
-				swiftBot.setButtonLight(Button.X, false);
-				break;
-			case 3:
-				swiftBot.setButtonLight(Button.Y, true);
-				lightUp(Underlight.BACK_RIGHT, yellow);
-				swiftBot.setButtonLight(Button.Y, false);
-				break;
-			}
-		}
-	}
+                case 2: // Scoreboard
+                    ui.scoreboardNotImplemented();
+                    Thread.sleep(1000);
+                    break;
 
-	public static void lightUp(Underlight u, int[] color) throws InterruptedException {
-		swiftBot.setUnderlight(u, color);
-		Thread.sleep(700); // Light on time
-		swiftBot.setUnderlight(u, blank);
-		Thread.sleep(200); // Gap between lights
-	}
+                case 3: // Settings
+                    ui.settingsNotImplemented();
+                    Thread.sleep(1000);
+                    break;
 
-	public static void DisplayLevel() {
-		System.out.println("Round "+level+"                                 Score "+(level-1));
-	}
-	
-	public static void celebrationDive(int score) throws InterruptedException { // input score
-		int speedPercent;
-		if (score < 5) speedPercent = 40;
-		else if (score >= 10) speedPercent = 100;
-		else speedPercent = score * 10;
+                case 4: // Quit
+                    ui.goodbye();
+                    running = false;
+                    break;
 
-		Underlight[] leds = {
-			Underlight.FRONT_LEFT,
-			Underlight.FRONT_RIGHT,
-			Underlight.MIDDLE_LEFT,
-			Underlight.MIDDLE_RIGHT,
-		};
-
-		blinkRandom(leds);
-
-		int armLength = 30; // cm
-		
-		swiftBot.move(armLength, 30, speedPercent);  // right arm
-		//swiftBot.turn(45, speedPercent);
-		swiftBot.move(armLength, 30, speedPercent);
-		//swiftBot.turn(-45, speedPercent);
-		//swiftBot.turn(-45, speedPercent);
-		swiftBot.move(armLength, 30, speedPercent);  // left arm
-		//swiftBot.turn(45, speedPercent);
-		swiftBot.move(armLength, 30, speedPercent);
-
-		blinkRandom(leds);
-	}
-
-	public static void blinkRandom(Underlight[] leds) throws InterruptedException{
-		List<int[]> colours = new ArrayList<>(Arrays.asList(yellow, red, green, blue));
-		Collections.shuffle(colours); 
-
-		for (int[] c: colours) {
-			for (Underlight led: leds) {
-				swiftBot.setUnderlight(led, c);
-			}
-			Thread.sleep(500);
-		}
-
-		swiftBot.fillUnderlights(blank);
-	}
+                default:
+                    ui.invalidOption();
+                    Thread.sleep(1000);
+            }
+        }
+    }
 }
 
 
 
+// =========================
+// GAME LOGIC CLASS
+// =========================
+class GameLogic {
+
+    private SwiftBotAPI swiftBot;
+    private CLI ui;
+
+    private ArrayList<Integer> colours = new ArrayList<>();
+    private Random random = new Random();
+    private int lives = 3;
+
+    private int level = 1;
+    private volatile boolean play = true;
+    private volatile boolean incomplete;
+
+    public GameLogic(SwiftBotAPI bot, CLI cli) {
+        this.swiftBot = bot;
+        this.ui = cli;
+    }
+
+    public int getLevel() { return level; }
+
+    public void start() throws InterruptedException {
+
+        incomplete = false;
+
+        while (play) {
+
+            ui.showLevel(level);
+            ui.showLives(lives);
+
+            colours.add(random.nextInt(4));
+            Display.showSequence(swiftBot, colours);
+
+            for (int i = 0; i < level; i++) {
+
+                int expected = colours.get(i);
+                incomplete = true;
+
+                long end = System.currentTimeMillis() + 10_000;
+
+                swiftBot.enableButton(Button.A, () -> handleInput(0, expected));
+                swiftBot.enableButton(Button.B, () -> handleInput(1, expected));
+                swiftBot.enableButton(Button.X, () -> handleInput(2, expected));
+                swiftBot.enableButton(Button.Y, () -> handleInput(3, expected));
+
+                while (System.currentTimeMillis() < end && incomplete) {
+                    Thread.sleep(10);
+                }
+
+                swiftBot.disableAllButtons();
+
+                if (incomplete && play) {
+                    ui.tooSlow();
+                    play = false;
+                }
+            }
+
+            if (play) {
+                level++;
+                ui.correctRound();
+                Thread.sleep(1000);
+            }
+
+            if (level % 5 == 0 && play) {
+                if (!ui.askContinue()) {
+                    play = false;
+                }
+            }
+
+            if (level % 5 == 0) {
+                lives++;
+                ui.extralife(lives);
+            }
+        }
+    }
+
+    private void handleInput(int pressed, int expected) {
+        if (!incomplete) return;
+
+        if (pressed == expected) {
+            incomplete = false;
+        } else {
+            lives--;
+            ui.wrongButton(lives);
+
+            if (lives <= 0) {
+                play = false;
+            }
+            incomplete = false;
+        }
+    }
+}
 
 
+
+// =========================
+// DISPLAY CLASS
+// =========================
+class Display {
+
+    public static final int[] red = {255, 0, 0};
+    public static final int[] green = {0, 255, 0};
+    public static final int[] blue = {0, 0, 255};
+    public static final int[] yellow = {255, 255, 0};
+    public static final int[] blank = {0, 0, 0};
+
+    public static void showSequence(SwiftBotAPI swiftBot, ArrayList<Integer> colours)
+            throws InterruptedException {
+
+        for (int c : colours) {
+            switch (c) {
+                case 0:
+                    swiftBot.setButtonLight(Button.A, true);
+                    light(swiftBot, Underlight.MIDDLE_LEFT, red);
+                    swiftBot.setButtonLight(Button.A, false);
+                    break;
+
+                case 1:
+                    swiftBot.setButtonLight(Button.B, true);
+                    light(swiftBot, Underlight.BACK_LEFT, blue);
+                    swiftBot.setButtonLight(Button.B, false);
+                    break;
+
+                case 2:
+                    swiftBot.setButtonLight(Button.X, true);
+                    light(swiftBot, Underlight.MIDDLE_RIGHT, green);
+                    swiftBot.setButtonLight(Button.X, false);
+                    break;
+
+                case 3:
+                    swiftBot.setButtonLight(Button.Y, true);
+                    light(swiftBot, Underlight.BACK_RIGHT, yellow);
+                    swiftBot.setButtonLight(Button.Y, false);
+                    break;
+            }
+        }
+    }
+
+    private static void light(SwiftBotAPI bot, Underlight u, int[] col)
+            throws InterruptedException {
+
+        bot.setUnderlight(u, col);
+        Thread.sleep(800);
+        bot.setUnderlight(u, blank);
+        Thread.sleep(200);
+    }
+}
+
+
+
+// =========================
+// CLI CLASS
+// =========================
+class CLI {
+
+    private Scanner scanner = new Scanner(System.in);
+
+    public int showMenu() {
+        System.out.println("========================================");
+        System.out.println("         ____  _                         ");
+        System.out.println("        / ___|(_)_ __ ___   ___ _ __     ");
+        System.out.println("        \\___ \\| | '_ ` _ \\ /   \\ '_ \\ ");
+        System.out.println("         ___) | | | | | | |  |  || | |   ");
+        System.out.println("        |____/|_|_| |_| |_|\\___/_| |_|   ");
+        System.out.println();
+        System.out.println("           S I M O N   S W I F T          ");
+        System.out.println("========================================");
+        System.out.println("              1) Play");
+        System.out.println("              2) Scoreboard");
+        System.out.println("              3) Settings");
+        System.out.println("              4) Quit");
+        System.out.println("========================================");
+        System.out.print("Select an option: ");
+
+        int choice = -1;
+        if (scanner.hasNextInt()) {
+            choice = scanner.nextInt();
+            scanner.nextLine();
+        }
+        return choice;
+    }
+
+    public void showWelcome() {
+        System.out.println("\n========================================");
+        System.out.println("         SWIFTBOT SIMON SAYS            ");
+        System.out.println("========================================");
+        System.out.println("Press ENTER to begin...");
+        scanner.nextLine();
+    }
+
+    public void showLevel(int level) {
+        System.out.println("\n========================================");
+        System.out.println("              LEVEL " + level + "               ");
+        System.out.println("========================================");
+    }
+
+    public void showLives(int lives) {
+        System.out.println("\n========================================");
+        System.out.println("              LIVES " + lives + "               ");
+        System.out.println("========================================");
+    }
+
+    public void extralife(int currentlives) {
+        System.out.println("\n========================================");
+        System.out.println("EXTRA LIFE!");
+        System.out.println("Lives remaining: " + currentlives);
+        System.out.println("========================================");
+    }
+
+    public void correctRound() {
+        System.out.println("Correct! Moving to next round...");
+    }
+
+    public void tooSlow() {
+        System.out.println("Too slow! Game over.");
+    }
+
+    public void wrongButton(int remainingLives) {
+        System.out.println("Wrong button! Lives remaining: " + remainingLives);
+    }
+
+    public boolean askContinue() {
+        System.out.print("Continue? (y/n): ");
+        String ans = scanner.nextLine();
+        return ans.equalsIgnoreCase("y");
+    }
+
+    public void finalScore(int score) {
+        System.out.println("\n========================================");
+        System.out.println("               GAME OVER                ");
+        System.out.println("           Final Score: " + score + "           ");
+        System.out.println("========================================\n");
+    }
+
+    public void settingsNotImplemented() {
+        System.out.println("Settings not implemented yet!");
+    }
+
+    public void scoreboardNotImplemented() {
+        System.out.println("Scoreboard not implemented yet!");
+    }
+
+    public void goodbye() {
+        System.out.println("Goodbye!");
+    }
+
+    public void invalidOption() {
+        System.out.println("Invalid option! Try again.");
+    }
+}
