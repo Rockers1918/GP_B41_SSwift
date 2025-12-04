@@ -11,17 +11,17 @@ import java.util.Scanner;
 // =========================
 public class main {
 
-	public static SwiftBotAPI swiftBot = SwiftBotAPI.INSTANCE;
-	public static Scoreboard scoreboard = new Scoreboard();
+	public static SwiftBotAPI swiftBot = SwiftBotAPI.INSTANCE; // Creating Instance
+	public static Scoreboard scoreboard = new Scoreboard(); // Creating Object
 
 	public static void main(String[] args) throws InterruptedException {
 
 		System.setProperty("file.encoding", "UTF-8");
-		CLI ui = new CLI();
+		CLI ui = new CLI(); // Intialising CLI Object
 
 		boolean running = true;
 
-		while (running) {
+		while (running) { // Main Program Loop
 			int choice = ui.showMenu();
 
 			switch (choice) {
@@ -93,6 +93,7 @@ class GameLogic {
 	private volatile boolean play = true;
 	private volatile boolean incomplete;
 
+	// Constructor
 	public GameLogic(SwiftBotAPI bot, CLI cli) {
 		this.swiftBot = bot;
 		this.ui = cli;
@@ -100,11 +101,11 @@ class GameLogic {
 
 	public int getLevel() { return level; }
 
-	public void start() throws InterruptedException {
+	public void start() throws InterruptedException { // Starts the game loop
 
 		incomplete = false;
 
-		while (play) {
+		while (play) { // Main Game Loop
 			
 			Utility.clearConsole();
 			ui.showTitle();
@@ -120,11 +121,13 @@ class GameLogic {
 
 				long end = System.currentTimeMillis() + 10_000;
 
+				// Enable Buttons (Linked Actions)
 				swiftBot.enableButton(Button.A, () -> handleInput(0, expected));
 				swiftBot.enableButton(Button.B, () -> handleInput(1, expected));
 				swiftBot.enableButton(Button.X, () -> handleInput(2, expected));
 				swiftBot.enableButton(Button.Y, () -> handleInput(3, expected));
 
+				// Timer for Input
 				while (System.currentTimeMillis() < end && incomplete) {
 					Thread.sleep(10);
 				}
@@ -137,7 +140,7 @@ class GameLogic {
 				}
 			}
 
-			if (level%5==0 && level>0) {
+			if (level%5==0 && level>0) { // Eve
 				if (!ui.askContinue()) {
 					play = false;
 				}
@@ -164,7 +167,7 @@ class GameLogic {
 	}
 
 
-	private void handleInput(int pressed, int expected) {
+	private void handleInput(int pressed, int expected) { //Input Handler : Wrong,Correct, Inform, End game,
 		if (!incomplete) return;
 
 		if (pressed == expected) {
@@ -187,6 +190,8 @@ class GameLogic {
 // DISPLAY CLASS
 // =========================
 class Display {
+	
+	//Predefined RGB color arrays for each colour
 
 	public static final int[] red = {255, 0, 0};
 	public static final int[] green = {0, 255, 0};
@@ -197,6 +202,7 @@ class Display {
 	public static void showSequence(SwiftBotAPI swiftBot, ArrayList<Integer> colours)
 			throws InterruptedException {
 
+		// Loops through each colour within the sequence
 		for (int c : colours) {
 			switch (c) {
 			case 0:
@@ -229,9 +235,9 @@ class Display {
 	private static void light(SwiftBotAPI bot, Underlight u, int[] col)
 			throws InterruptedException {
 
-		bot.setUnderlight(u, col);
+		bot.setUnderlight(u, col); // Lights up in 700ms
 		Thread.sleep(700);
-		bot.setUnderlight(u, blank);
+		bot.setUnderlight(u, blank);// Lights off in 200ms
 		Thread.sleep(200);
 	}
 }
@@ -265,7 +271,7 @@ class CLI {
 	}
 
 	
-	public void showTitle() {
+	public void showTitle() { // Title
 		System.out.println("========================================");
 		System.out.println("         ____  _                         ");
 		System.out.println("        / ___|(_)_ __ ___   ___ _ __     ");
@@ -277,7 +283,7 @@ class CLI {
 		System.out.println("========================================");
 	}
 
-	public void showWelcome() {
+	public void showWelcome() { // Start Of Game
 		System.out.println("\n========================================");
 		System.out.println("         SWIFTBOT SIMON SAYS            ");
 		System.out.println("========================================");
@@ -285,39 +291,39 @@ class CLI {
 		scanner.nextLine();
 	}
 
-	public void showLevelandLives(int level, int lives) {
+	public void showLevelandLives(int level, int lives) { // Displays Level & Lives
 		System.out.println("\n========================================");
 		System.out.println("    LEVEL " + level + "          LIVES: " + lives);
 		System.out.println("========================================");
 	}
 
 
-	public void extralife(int currentlives) {
+	public void extralife(int currentlives) { //Bonus Life with current lives
 		System.out.println("\n========================================");
 		System.out.println("EXTRA LIFE!");
 		System.out.println("Lives remaining: " + currentlives);
 		System.out.println("========================================");
 	}
 
-	public void correctRound() {
-		System.out.println("Correct! Moving to next round...");
+	public void correctRound() { // Correct
+		System.out.println("Correct! Moving to next round..."); 
 	}
 
-	public void tooSlow() {
-		System.out.println("Too slow! Game over.");
+	public void tooSlow() { // Too slow
+		System.out.println("Too slow! Game over."); 
 	}
 
-	public void wrongButton(int remainingLives) {
-		System.out.println("Wrong button! Lives remaining: " + remainingLives);
+	public void wrongButton(int remainingLives) { // Wrong with remaining lives
+		System.out.println("Wrong button! Lives remaining: " + remainingLives); 
 	}
 
-	public boolean askContinue() {
-		System.out.print("Would You Like To Continue? (Y/N): ");
+	public boolean askContinue() { // Continuation
+		System.out.print("Would You Like To Continue? (Y/N): "); 
 		String ans = scanner.nextLine();
 		return ans.equalsIgnoreCase("y");
 	}
 
-	public void finalScore(int score) {
+	public void finalScore(int score) { // Game over
 		System.out.println("\n========================================");
 		System.out.println("               GAME OVER                ");
 		System.out.println("           Final Score: " + score + "           ");
@@ -328,11 +334,11 @@ class CLI {
 		System.out.println("Settings not implemented yet!");
 	}
 
-	public void goodbye() {
+	public void goodbye() { // End Screen
 		System.out.println("Goodbye!");
 	}
 
-	public void invalidOption() {
+	public void invalidOption() { // Invalid Option
 		System.out.println("Invalid option! Try again.");
 	}
 }
@@ -342,14 +348,14 @@ class CLI {
 // =========================
 class Scoreboard {
 
-    private static final String FILE_NAME = "scoreboard.txt";
+    private static final String FILE_NAME = "scoreboard.txt"; // File where scores are saved
 
     // Saves a new score
-    public void saveScore(String name, int score) {
-        try (FileWriter fw = new FileWriter(FILE_NAME, true)) {
-            fw.write(name + " - " + score + "\n");
+    public void saveScore(String name, int score) { // Uses parameters such as name and score
+        try (FileWriter fw = new FileWriter(FILE_NAME, true)) { // Appending 
+            fw.write(name + " - " + score + "\n"); // Stores in Name - Score format
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Error Handler
         }
     }
 
@@ -361,7 +367,7 @@ class Scoreboard {
 
         File file = new File(FILE_NAME);
         if (!file.exists()) {
-            System.out.println("No scores yet!");
+            System.out.println("No scores yet!"); // If file doesnt exist
             return;
         }
 
@@ -370,7 +376,7 @@ class Scoreboard {
         try (Scanner sc = new Scanner(file)) {
             while (sc.hasNextLine()) {
                 String line = sc.nextLine();
-                String[] parts = line.split(" - ");
+                String[] parts = line.split(" - "); // Reads the name and score which is split by the -
                 if (parts.length == 2) {
                     String name = parts[0];
                     int score = Integer.parseInt(parts[1].trim());
@@ -385,7 +391,7 @@ class Scoreboard {
         scores.sort((a, b) -> b.score - a.score);
 
         // Print table header
-        System.out.printf("%-4s | %-20s | %s%n", "Rank", "Player Name", "Score");
+        System.out.printf("%-4s | %-20s | %s%n", "Rank", "Player Name", "Score"); //Uses format string - (Left aligned), Field Size, d = integer s = string and n = new line character
         System.out.println("----------+---------------------------+------------");
 
         // Print top scores
@@ -398,7 +404,7 @@ class Scoreboard {
         System.out.println("==================================\n");
     }
 
-    // Private Class which stores player and score
+    // Helper class for storing player and score
     private static class PlayerScore {
         String name;
         int score;
@@ -413,14 +419,23 @@ class Scoreboard {
 }
 
 //=========================
+//SETTINGS CLASS
+//=========================
+
+class Settings {
+	// WIP - Work In Progress
+}
+
+
+//=========================
 //UTILITY CLASS
 //=========================
 
 class Utility {
 	
-	public static void clearConsole() {
-	    System.out.print("\033[H\033[2J");
-	    System.out.flush();
+	public static void clearConsole() { // One of many ways to clear console
+	    System.out.print("\033[H\033[2J"); // ANSI Escape Code - Moves cursor to the top left and clears the screen
+	    System.out.flush(); // Imediate Output effect
 	}
 }
 	
