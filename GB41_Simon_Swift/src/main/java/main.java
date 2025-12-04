@@ -26,7 +26,10 @@ public class main {
 		GameLogic();
 
 		swiftBot.fillUnderlights(blank);
-		System.out.println("Final Score"+(level-1));
+		System.out.println();
+		System.out.println("Final Round: " + level + "             |             Final Score: " + (level-1));
+		//blinkRandom();
+		celebrationDive(level-1);
 	}
 
 
@@ -63,22 +66,27 @@ public class main {
 			}
 
 			//When sequence survived
+			if (level%5==0) {
+				System.out.println("Would you like to continue? (y/n): ");
+				String ans = reader.next();
+				if (ans.equals("y")) {
+					
+				}
+				else if (ans.equals("n")) { //ans.equals to compare strings
+					System.out.println("See you again champ!");
+
+					play = false;
+					break;
+				}
+			}
+			
 			if (play) {
 				level++;
 				System.out.println("Correct! Next Round");
 				Thread.sleep(1000);
 			}
 			
-			if (level%5==0) {
-				System.out.println("Would you like to continue? (y/n): ");
-				String ans = reader.next();
-				if (ans=="y") {
-					break;
-				}
-				else if (ans=="n") {
-					
-				}
-			}
+			
 		}
 	}
 
@@ -90,7 +98,7 @@ public class main {
 			incomplete = false; // This breaks the waiting loop
 		} else {
 			// Wrong button
-			System.out.println("Wrong button!");
+			System.out.println("Game Over!");
 			play = false;
 			incomplete = false; // Break the loop to end game
 		}
@@ -131,7 +139,7 @@ public class main {
 	}
 
 	public static void DisplayLevel() {
-		System.out.println("Level "+level);
+		System.out.println("Round "+level+"                                 Score "+(level-1));
 	}
 
 	public static void celebrationDive(int score) throws InterruptedException { // input score
@@ -152,18 +160,18 @@ public class main {
 		int armLength = 30; // cm
 		
 		swiftBot.move(armLength, 30, speedPercent);  // right arm
-		swiftBot.turn(45, speedPercent);
+		//swiftBot.turn(45, speedPercent);
 		swiftBot.move(armLength, 30, speedPercent);
-		swiftBot.turn(-45, speedPercent);
-		swiftBot.turn(-45, speedPercent);
+		//swiftBot.turn(-45, speedPercent);
+		//swiftBot.turn(-45, speedPercent);
 		swiftBot.move(armLength, 30, speedPercent);  // left arm
-		swiftBot.turn(45, speedPercent);
+		//swiftBot.turn(45, speedPercent);
 		swiftBot.move(armLength, 30, speedPercent);
 
 		blinkRandom(leds);
 	}
 
-	public static void blinkRandom(Underlight[] leds) {
+	public static void blinkRandom(Underlight[] leds) throws InterruptedException {
 		List<int[]> colours = new ArrayList<>(Arrays.asList(yellow, red, green, blue));
 		Collections.shuffle(colours); 
 
