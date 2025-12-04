@@ -30,6 +30,7 @@ public class main {
 		System.out.println("Final Round: " + level + "             |             Final Score: " + (level-1));
 		//blinkRandom();
 		celebrationDive(level-1);
+		restart();
 	}
 
 
@@ -140,6 +141,28 @@ public class main {
 
 	public static void DisplayLevel() {
 		System.out.println("Round "+level+"                                 Score "+(level-1));
+	}
+	
+	public static void restart() {
+		Scanner scanner = new Scanner(System.in);
+		
+		System.out.println("Would you like to restart (y/n): ");
+		String restartGame = scanner.nextLine();
+		if (restartGame.equalsIgnoreCase("y")) {
+			play = true;
+			incomplete = false;
+			level = 1;
+			colours.clear();
+			try {
+				GameLogic();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		else {
+			System.out.println("ended");
+		}
+		scanner.close();
 	}
 
 	public static void celebrationDive(int score) throws InterruptedException { // input score
