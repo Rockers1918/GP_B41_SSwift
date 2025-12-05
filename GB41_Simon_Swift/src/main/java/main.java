@@ -4,6 +4,7 @@ import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
 import java.util.Scanner;
+import java.util.Random;
 
 
 // =========================
@@ -206,10 +207,7 @@ class GameLogic {
 
 		for (int i = 0; i < 4; i++) {
 			int[] c = colors[r.nextInt(4)];
-			swiftBot.fillUnderlights(c);
-			Thread.sleep(300);
-			swiftBot.fillUnderlights(Display.blank);
-			Thread.sleep(200);
+			Display.showSequence(swiftBot, c);
 		}
 
 		// Celebration V
@@ -223,10 +221,7 @@ class GameLogic {
 
 		for (int i = 0; i < 4; i++) {
 			int[] c = colors[r.nextInt(4)];
-			swiftBot.fillUnderlights(c);
-			Thread.sleep(300);
-			swiftBot.fillUnderlights(blank);
-			Thread.sleep(200);
+			Display.showSequence(swiftBot, c);
 		}
 
 		swiftBot.fillUnderlights(blank);
