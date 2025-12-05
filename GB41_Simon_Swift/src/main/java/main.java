@@ -34,7 +34,9 @@ public class main {
 
 				swiftBot.fillUnderlights(Display.blank);
 				score = game.getLevel() - 1;
-				game.celebrationDive(score);
+				if (score >= 5) {
+					game.celebrationDive(score);
+				}
 				ui.finalScore(score);
 				System.out.print("Enter your name: ");
 				Scanner sc = new Scanner(System.in);
