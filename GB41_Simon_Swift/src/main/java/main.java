@@ -20,6 +20,7 @@ public class main {
 		CLI ui = new CLI(); // Intialising CLI Object
 
 		boolean running = true;
+		int score;
 
 		while (running) { // Main Program Loop
 			int choice = ui.showMenu();
@@ -32,7 +33,9 @@ public class main {
 				game.start();
 
 				swiftBot.fillUnderlights(Display.blank);
-				ui.finalScore(game.getLevel() - 1);
+				score = game.getLevel() - 1;
+				game.celebrationDive(score);
+				ui.finalScore(score);
 				System.out.print("Enter your name: ");
 				Scanner sc = new Scanner(System.in);
 				String name = sc.nextLine();
@@ -182,6 +185,51 @@ class GameLogic {
 			incomplete = false;
 		}
 	}
+
+	public void celebrationDive(int score) throws InterruptedException {
+		int speed;
+		if (score < 5) {
+			speed = 40;
+		} else if (score >= 10) {
+			speed = 100;
+		} else {
+			speed = score * 10;
+		}
+
+		// 30cm untested
+		int moveTime = (int)(30.0 / speed * 1000);
+
+		int[][] colors = { Display.red, Display.green, Display.blue, Display.yellow };
+		Random r = new Random();
+
+		for (int i = 0; i < 4; i++) {
+			int[] c = colors[r.nextInt(4)];
+			swiftBot.fillUnderlights(c);
+			Thread.sleep(300);
+			swiftBot.fillUnderlights(Display.blank);
+			Thread.sleep(200);
+		}
+
+		// Celebration V
+		swiftBot.move(speed, speed / 2, moveTime);
+		Thread.sleep(200);
+
+		swiftBot.move(speed / 2, speed, moveTime);
+		Thread.sleep(200);
+
+		swiftBot.stopMove();
+
+		for (int i = 0; i < 4; i++) {
+			int[] c = colors[r.nextInt(4)];
+			swiftBot.fillUnderlights(c);
+			Thread.sleep(300);
+			swiftBot.fillUnderlights(blank);
+			Thread.sleep(200);
+		}
+
+		swiftBot.fillUnderlights(blank);
+	}
+
 }
 
 
