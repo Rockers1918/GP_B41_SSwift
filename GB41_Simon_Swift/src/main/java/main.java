@@ -13,11 +13,14 @@ public class main {
 
 	public static SwiftBotAPI swiftBot = SwiftBotAPI.INSTANCE; // Creating Instance
 	public static Scoreboard scoreboard = new Scoreboard(); // Creating Object
+	public static Settings settings;
+
 
 	public static void main(String[] args) throws InterruptedException {
 
 		System.setProperty("file.encoding", "UTF-8");
 		CLI ui = new CLI(); // Intialising CLI Object
+		Settings settings = new Settings(ui);
 
 		boolean running = true;
 		int score;
@@ -29,7 +32,7 @@ public class main {
 			case 1: // Play
 				swiftBot.fillUnderlights(Display.blank);
 
-				GameLogic game = new GameLogic(swiftBot, ui);
+				GameLogic game = new GameLogic(swiftBot, ui, settings);
 				game.start();
 
 				swiftBot.fillUnderlights(Display.blank);
@@ -57,7 +60,7 @@ public class main {
 			case 3: // Settings
 				Utility.clearConsole();
 				ui.showTitle();
-				ui.settingsNotImplemented();
+				settings.showMenu(); 
 				Thread.sleep(1000);
 				ui.askContinue();
 				Utility.clearConsole();
@@ -90,17 +93,22 @@ class GameLogic {
 
 	private ArrayList<Integer> colours = new ArrayList<>();
 	private Random random = new Random();
-	private int lives = 3;
-
+	private Settings settings; 
+	private int lives; 
 	private int level = 1;
 	private volatile boolean play = true;
 	private volatile boolean incomplete;
 
+
+
 	// Constructor
-	public GameLogic(SwiftBotAPI bot, CLI cli) {
-		this.swiftBot = bot;
-		this.ui = cli;
+	public GameLogic(SwiftBotAPI bot, CLI cli, Settings settings) {
+	    this.swiftBot = bot;
+	    this.ui = cli;
+	    this.settings = settings;
+	    this.lives = settings.getStartingLives(); // initialize lives from passed settings
 	}
+
 
 	public int getLevel() { return level; }
 
@@ -204,44 +212,55 @@ class GameLogic {
 	}
 	
 	public void celebrationDive(int score) throws InterruptedException {
-		int[] speeds = {23,26,28,29,30,31}; //Actual speed cm/s for 1 second of movement power 50-100
-		int speed;
-		if (score < 5) {
-			speed = 40;
-		} else if (score >= 10) {
-			speed = 100;
-		} else {
-			speed = score * 10;
-		}
+	    int[] speeds = {23, 26, 28, 29, 30, 31}; // Actual speeds cm/s
 
-		// 30cm untested
-		int moveTime = (int)(30.0 / speeds[speed/10-5] * 1000);
+	    // Determine speed based on score
+	    int speed;
+	    if (score < 5) {
+	        speed = 40;
+	    } else if (score >= 10) {
+	        speed = 100;
+	    } else {
+	        speed = score * 10;
+	    }
 
-		ArrayList<Integer> colours = new ArrayList<>();
-		Random r = new Random();
-		for (int i = 0; i < 4; i++) {
-			colours.add(r.nextInt(4));
-		}
+	    // Calculate safe index for speeds array
+	    int speedIndex = speed / 10 - 5;
+	    speedIndex = Math.max(0, Math.min(speeds.length - 1, speedIndex));
 
-		Display.showSequence(swiftBot, colours);
-		// Celebration V
-		swiftBot.move(speed, speed, moveTime);
-		Thread.sleep(200);
-		swiftBot.move(100, 0, 1000);
-		Thread.sleep(200);		
-		swiftBot.move(speed, speed, moveTime);
-		Thread.sleep(200);
+	    // Calculate move time
+	    int moveTime = (int)(30.0 / speeds[speedIndex] * 1000);
 
-		swiftBot.stopMove();
+	    // Generate random colours for display
+	    ArrayList<Integer> colours = new ArrayList<>();
+	    Random r = new Random();
+	    for (int i = 0; i < 4; i++) {
+	        colours.add(r.nextInt(4));
+	    }
 
-		for (int i = 0; i < 4; i++) {
-			colours.add(r.nextInt(4));
-		}
-		Display.showSequence(swiftBot, colours);
+	    // Show initial sequence
+	    Display.showSequence(swiftBot, colours);
 
-		swiftBot.fillUnderlights(Display.blank);
+	    // Celebration movement
+	    swiftBot.move(speed, speed, moveTime);
+	    Thread.sleep(200);
+	    swiftBot.move(100, 0, 1000);
+	    Thread.sleep(200);        
+	    swiftBot.move(speed, speed, moveTime);
+	    Thread.sleep(200);
+	    swiftBot.stopMove();
 
+	    // Show another random sequence
+	    colours.clear();
+	    for (int i = 0; i < 4; i++) {
+	        colours.add(r.nextInt(4));
+	    }
+	    Display.showSequence(swiftBot, colours);
+
+	    // Clear underlights
+	    swiftBot.fillUnderlights(Display.blank);
 	}
+
 
 
 }
@@ -346,7 +365,7 @@ class CLI {
 	}
 
 	
-	public void showTitle() { // Title in purple
+	public void showTitle() { // Title 
 
 	    System.out.println(PURPLE + "========================================" + RESET);
 	    System.out.println(PURPLE + "         ____  _                         " + RESET);
@@ -500,8 +519,83 @@ class Scoreboard {
 //=========================
 
 class Settings {
-	// WIP - Work In Progress
+    private int startingLives = 3;
+    private Scanner scanner = new Scanner(System.in);
+    private CLI ui; // Add this
+
+    public Settings(CLI ui) {
+        this.ui = ui;
+    }
+    
+    public void setLives(int lives) {
+        startingLives = lives;
+    }
+
+    public int getStartingLives() {
+        return startingLives;
+    }
+
+    // ==========================
+    // SETTINGS MENU
+    // ==========================
+    public void showMenu() {
+        boolean inMenu = true;
+
+        while (inMenu) {
+            Utility.clearConsole();
+            ui.showTitle();
+            System.out.println("========== SETTINGS ==========");
+            System.out.println("Current starting lives: " + getStartingLives());
+            System.out.println("1) Set starting lives");
+            System.out.println("2) Reset to default (3 lives)");
+            System.out.println("3) Back to main menu");
+            System.out.println("==============================");
+            System.out.print("Choose an option: ");
+
+            String choice = scanner.nextLine();
+
+            switch (choice) {
+                case "1":
+                    System.out.print("Enter new number of starting lives: ");
+                    try {
+                        int lives = Integer.parseInt(scanner.nextLine());
+                        if (lives < 1) {
+                            System.out.println("Lives must be at least 1!");
+                        } else {
+                            setLives(lives);
+                            System.out.println("Starting lives set to " + getStartingLives());
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid input! Please enter a number.");
+                    }
+                    pause();
+                    break;
+
+                case "2":
+                    setLives(3);
+                    System.out.println("Starting lives reset to default (3).");
+                    pause();
+                    break;
+
+                case "3":
+                    inMenu = false;
+                    break;
+
+                default:
+                    System.out.println("Invalid option! Try again.");
+                    pause();
+            }
+        }
+    }
+
+    private void pause() {
+        System.out.println("Press ENTER to continue...");
+        scanner.nextLine();
+    }
 }
+
+
+
 
 //=========================
 //UTILITY CLASS
