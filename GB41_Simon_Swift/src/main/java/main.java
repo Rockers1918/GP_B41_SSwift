@@ -3,8 +3,6 @@ import java.io.*;
 import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
-import java.util.Scanner;
-import java.util.Random;
 
 
 // =========================
@@ -51,7 +49,7 @@ public class main {
 			case 2: // Scoreboard
 				Utility.clearConsole();
 				ui.showTitle();
-			    main.scoreboard.show();
+				main.scoreboard.show();
 				Thread.sleep(1000);
 				ui.askContinue();
 				Utility.clearConsole();
@@ -98,6 +96,7 @@ class GameLogic {
 	private int level = 1;
 	private volatile boolean play = true;
 	private volatile boolean incomplete;
+	public static final int[] blank = {0, 0, 0};
 
 	// Constructor
 	public GameLogic(SwiftBotAPI bot, CLI cli) {
@@ -112,7 +111,7 @@ class GameLogic {
 		incomplete = false;
 
 		while (play) { // Main Game Loop
-			
+
 			Utility.clearConsole();
 			ui.showTitle();
 			ui.showLevelandLives(level,lives);
@@ -135,7 +134,7 @@ class GameLogic {
 
 				// Timer for Input
 				while (System.currentTimeMillis() < end && incomplete) {
-					Thread.sleep(10);
+					Thread.yield();
 				}
 
 				swiftBot.disableAllButtons();
@@ -190,6 +189,7 @@ class GameLogic {
 	}
 
 	public void celebrationDive(int score) throws InterruptedException {
+		int[] speeds = {23,26,28,29,30,31}; //Actual speed cm/s for 1 second of movement power 50-100
 		int speed;
 		if (score < 5) {
 			speed = 40;
@@ -200,7 +200,7 @@ class GameLogic {
 		}
 
 		// 30cm untested
-		int moveTime = (int)(30.0 / speed * 1000);
+		int moveTime = (int)(30.0 / speeds[speed/10-5] * 1000);
 
 		ArrayList<Integer> colours = new ArrayList<>();
 		Random r = new Random();
@@ -210,20 +210,22 @@ class GameLogic {
 
 		Display.showSequence(swiftBot, colours);
 		// Celebration V
-		swiftBot.move(speed, speed / 2, moveTime);
+		swiftBot.move(speed, speed, moveTime);
 		Thread.sleep(200);
-
-		swiftBot.move(speed / 2, speed, moveTime);
+		swiftBot.move(100, 0, 1000);
+		Thread.sleep(200);		
+		swiftBot.move(speed, speed, moveTime);
 		Thread.sleep(200);
 
 		swiftBot.stopMove();
 
 		for (int i = 0; i < 4; i++) {
-			colours.set(i, r.nextInt(4));
+			colours.add(r.nextInt(4));
 		}
 		Display.showSequence(swiftBot, colours);
 
-		swiftBot.fillUnderlights(Display.blank);
+		swiftBot.fillUnderlights(blank);
+
 	}
 
 }
@@ -234,7 +236,7 @@ class GameLogic {
 // DISPLAY CLASS
 // =========================
 class Display {
-	
+
 	//Predefined RGB color arrays for each colour
 
 	public static final int[] red = {255, 0, 0};
@@ -296,25 +298,25 @@ class CLI {
 	private Scanner scanner = new Scanner(System.in);
 
 	public int showMenu() {
-	    this.showTitle();
-	    System.out.println("              1) Play");
-	    System.out.println("              2) Scoreboard");
-	    System.out.println("              3) Settings");
-	    System.out.println("              4) Quit");
-	    System.out.println("========================================");
-	    System.out.print("Select an option: ");
+		this.showTitle();
+		System.out.println("              1) Play");
+		System.out.println("              2) Scoreboard");
+		System.out.println("              3) Settings");
+		System.out.println("              4) Quit");
+		System.out.println("========================================");
+		System.out.print("Select an option: ");
 
-	    int choice = -1;
-	    if (scanner.hasNextInt()) {
-	        choice = scanner.nextInt();
-	        scanner.nextLine(); // consume the newline
-	    } else {
-	        scanner.nextLine(); // **consume invalid input**
-	    }
-	    return choice;
+		int choice = -1;
+		if (scanner.hasNextInt()) {
+			choice = scanner.nextInt();
+			scanner.nextLine(); // consume the newline
+		} else {
+			scanner.nextLine(); // **consume invalid input**
+		}
+		return choice;
 	}
 
-	
+
 	public void showTitle() { // Title
 		System.out.println("========================================");
 		System.out.println("         ____  _                         ");
@@ -386,80 +388,80 @@ class CLI {
 		System.out.println("Invalid option! Try again.");
 	}
 }
-	
+
 // =========================
 // SCOREBOARD CLASS
 // =========================
 class Scoreboard {
 
-    private static final String FILE_NAME = "scoreboard.txt"; // File where scores are saved
+	private static final String FILE_NAME = "scoreboard.txt"; // File where scores are saved
 
-    // Saves a new score
-    public void saveScore(String name, int score) { // Uses parameters such as name and score
-        try (FileWriter fw = new FileWriter(FILE_NAME, true)) { // Appending 
-            fw.write(name + " - " + score + "\n"); // Stores in Name - Score format
-        } catch (IOException e) {
-            e.printStackTrace(); // Error Handler
-        }
-    }
+	// Saves a new score
+	public void saveScore(String name, int score) { // Uses parameters such as name and score
+		try (FileWriter fw = new FileWriter(FILE_NAME, true)) { // Appending 
+			fw.write(name + " - " + score + "\n"); // Stores in Name - Score format
+		} catch (IOException e) {
+			e.printStackTrace(); // Error Handler
+		}
+	}
 
-    
-    // Displays the scoreboard
-    public void show() {
-    	
-        System.out.println("\n================== SCOREBOARD ==================");
 
-        File file = new File(FILE_NAME);
-        if (!file.exists()) {
-            System.out.println("No scores yet!"); // If file doesnt exist
-            return;
-        }
+	// Displays the scoreboard
+	public void show() {
 
-        // Read all scores into a list
-        ArrayList<PlayerScore> scores = new ArrayList<>();
-        try (Scanner sc = new Scanner(file)) {
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                String[] parts = line.split(" - "); // Reads the name and score which is split by the -
-                if (parts.length == 2) {
-                    String name = parts[0];
-                    int score = Integer.parseInt(parts[1].trim());
-                    scores.add(new PlayerScore(name, score));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+		System.out.println("\n================== SCOREBOARD ==================");
 
-        // Sort scores descending
-        scores.sort((a, b) -> b.score - a.score);
+		File file = new File(FILE_NAME);
+		if (!file.exists()) {
+			System.out.println("No scores yet!"); // If file doesnt exist
+			return;
+		}
 
-        // Print table header
-        System.out.printf("%-4s | %-20s | %s%n", "Rank", "Player Name", "Score"); //Uses format string - (Left aligned), Field Size, d = integer s = string and n = new line character
-        System.out.println("----------+---------------------------+------------");
+		// Read all scores into a list
+		ArrayList<PlayerScore> scores = new ArrayList<>();
+		try (Scanner sc = new Scanner(file)) {
+			while (sc.hasNextLine()) {
+				String line = sc.nextLine();
+				String[] parts = line.split(" - "); // Reads the name and score which is split by the -
+				if (parts.length == 2) {
+					String name = parts[0];
+					int score = Integer.parseInt(parts[1].trim());
+					scores.add(new PlayerScore(name, score));
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-        // Print top scores
-        int rank = 1;
-        for (PlayerScore ps : scores) {
-            System.out.printf("%-4d | %-20s | %d%n", rank, ps.name, ps.score);
-            rank++;
-        }
+		// Sort scores descending
+		scores.sort((a, b) -> b.score - a.score);
 
-        System.out.println("==================================\n");
-    }
+		// Print table header
+		System.out.printf("%-4s | %-20s | %s%n", "Rank", "Player Name", "Score"); //Uses format string - (Left aligned), Field Size, d = integer s = string and n = new line character
+		System.out.println("----------+---------------------------+------------");
 
-    // Helper class for storing player and score
-    private static class PlayerScore {
-        String name;
-        int score;
+		// Print top scores
+		int rank = 1;
+		for (PlayerScore ps : scores) {
+			System.out.printf("%-4d | %-20s | %d%n", rank, ps.name, ps.score);
+			rank++;
+		}
 
-        PlayerScore(String name, int score) {
-            this.name = name;
-            this.score = score;
-        }
-    }
+		System.out.println("==================================\n");
+	}
 
-    
+	// Helper class for storing player and score
+	private static class PlayerScore {
+		String name;
+		int score;
+
+		PlayerScore(String name, int score) {
+			this.name = name;
+			this.score = score;
+		}
+	}
+
+
 }
 
 //=========================
@@ -476,11 +478,10 @@ class Settings {
 //=========================
 
 class Utility {
-	
+
 	public static void clearConsole() { // One of many ways to clear console
-	    System.out.print("\033[H\033[2J"); // ANSI Escape Code - Moves cursor to the top left and clears the screen
-	    System.out.flush(); // Imediate Output effect
+		System.out.print("\033[H\033[2J"); // ANSI Escape Code - Moves cursor to the top left and clears the screen
+		System.out.flush(); // Imediate Output effect
 	}
 }
-	
 
