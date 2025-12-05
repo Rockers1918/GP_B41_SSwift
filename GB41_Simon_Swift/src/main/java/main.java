@@ -3,6 +3,7 @@ import java.io.*;
 import swiftbot.Button;
 import swiftbot.SwiftBotAPI;
 import swiftbot.Underlight;
+import java.util.Scanner;
 
 
 // =========================
@@ -32,11 +33,9 @@ public class main {
 				game.start();
 
 				swiftBot.fillUnderlights(Display.blank);
+				ui.finalScore(game.getLevel() - 1);
 				score = game.getLevel() - 1;
-				if (score >= 5) {
-					game.celebrationDive(score);
-				}
-				ui.finalScore(score);
+				game.celebrationDive(score);
 				System.out.print("Enter your name: ");
 				Scanner sc = new Scanner(System.in);
 				String name = sc.nextLine();
@@ -49,7 +48,7 @@ public class main {
 			case 2: // Scoreboard
 				Utility.clearConsole();
 				ui.showTitle();
-				main.scoreboard.show();
+			    main.scoreboard.show();
 				Thread.sleep(1000);
 				ui.askContinue();
 				Utility.clearConsole();
@@ -96,7 +95,6 @@ class GameLogic {
 	private int level = 1;
 	private volatile boolean play = true;
 	private volatile boolean incomplete;
-	public static final int[] blank = {0, 0, 0};
 
 	// Constructor
 	public GameLogic(SwiftBotAPI bot, CLI cli) {
@@ -110,84 +108,101 @@ class GameLogic {
 
 		incomplete = false;
 
-		while (play) { // Main Game Loop
+		while (play) {  // Main Game Loop
 
-			Utility.clearConsole();
-			ui.showTitle();
-			ui.showLevelandLives(level,lives);
+		    Utility.clearConsole();
+		    ui.showTitle();
+		    ui.showLevelandLives(level, lives);
 
-			colours.add(random.nextInt(4));
-			Display.showSequence(swiftBot, colours);
+		    // Add next colour to sequence
+		    colours.add(random.nextInt(4));
+		    Display.showSequence(swiftBot, colours);
 
-			for (int i = 0; i < level; i++) {
+		    // Player must repeat the sequence
+		    for (int i = 0; i < level; i++) {
 
-				int expected = colours.get(i);
-				incomplete = true;
+		        int expected = colours.get(i);
+		        incomplete = true;
 
-				long end = System.currentTimeMillis() + 10_000;
+		        long end = System.currentTimeMillis() + 10_000;
 
-				// Enable Buttons (Linked Actions)
-				swiftBot.enableButton(Button.A, () -> handleInput(0, expected));
-				swiftBot.enableButton(Button.B, () -> handleInput(1, expected));
-				swiftBot.enableButton(Button.X, () -> handleInput(2, expected));
-				swiftBot.enableButton(Button.Y, () -> handleInput(3, expected));
+		        // Enable Buttons
+		        swiftBot.enableButton(Button.A, () -> handleInput(0, expected));
+		        swiftBot.enableButton(Button.B, () -> handleInput(1, expected));
+		        swiftBot.enableButton(Button.X, () -> handleInput(2, expected));
+		        swiftBot.enableButton(Button.Y, () -> handleInput(3, expected));
 
-				// Timer for Input
-				while (System.currentTimeMillis() < end && incomplete) {
-					Thread.yield();
-				}
-
-				swiftBot.disableAllButtons();
-
-				if (incomplete && play) {
-					ui.tooSlow();
-					play = false;
-				}
-			}
-
-			if (level%5==0 && level>0) { // Eve
-				if (!ui.askContinue()) {
-					play = false;
-				}
-			}
-
-			if (play) {
-				level++;
-				ui.correctRound();
-				Thread.sleep(1000);
-			}
-
-		}
-		if (play) {
-			level++;
-			System.out.println("Correct! Next Round");
-			Thread.sleep(1000);
-		}
+		        // Wait for button press OR timeout
+		        while (System.currentTimeMillis() < end && incomplete && play) {
+		            Thread.sleep(10); 
+		        }
 
 
-		if (level % 5 == 0) {
-			lives++;
-			ui.extralife(lives);
-		}
-	}
+		        // Disable all buttons
+		        swiftBot.disableAllButtons();
 
+		        // If time ran out
+		        if (incomplete && play) {
+		            ui.tooSlow();
+		            play = false;
+		            break;
+		        }
+		    }
 
-	private void handleInput(int pressed, int expected) { //Input Handler : Wrong,Correct, Inform, End game,
-		if (!incomplete) return;
+		    // If the player failed, stop
+		    if (!play) {
+		        break;
+		    }
 
-		if (pressed == expected) {
-			incomplete = false;
-		} else {
-			lives--;
-			ui.wrongButton(lives);
+		    // If they completed the round correctly
+		    ui.correctRound();
+		    Thread.sleep(1000);
 
-			if (lives <= 0) {
-				play = false;
-			}
-			incomplete = false;
+		    // Every 5th level → extra life + ask to continue
+		    if (level % 5 == 0) {
+		        lives++;
+		        ui.extralife(lives);
+
+		        if (!ui.askContinue()) {
+		            play = false;
+		        }
+		    }
+		    level++;
 		}
 	}
 
+
+	private synchronized void handleInput(int pressed, int expected) {
+	    // Stop if game already ended
+	    if (!play) return;
+
+	    // Stop if player has no lives left
+	    if (lives <= 0) return;
+
+	    if (pressed == expected) {
+	        // Correct button
+	        incomplete = false;
+	        return;
+	    }
+
+	    // Wrong button
+	    lives--;
+	    ui.wrongButton(lives);
+
+	    // If player has now run out of lives
+	    if (lives <= 0) {
+	        play = false;
+	        swiftBot.disableAllButtons();
+	        incomplete = false;
+	        return; // <-- makes sure nothing after this runs
+	    }
+
+	 
+
+	    // Stop waiting for input in the current round
+	    incomplete = false;
+	}
+	
 	public void celebrationDive(int score) throws InterruptedException {
 		int[] speeds = {23,26,28,29,30,31}; //Actual speed cm/s for 1 second of movement power 50-100
 		int speed;
@@ -224,9 +239,10 @@ class GameLogic {
 		}
 		Display.showSequence(swiftBot, colours);
 
-		swiftBot.fillUnderlights(blank);
+		swiftBot.fillUnderlights(Display.blank);
 
 	}
+
 
 }
 
@@ -236,7 +252,7 @@ class GameLogic {
 // DISPLAY CLASS
 // =========================
 class Display {
-
+	
 	//Predefined RGB color arrays for each colour
 
 	public static final int[] red = {255, 0, 0};
@@ -296,38 +312,53 @@ class Display {
 class CLI {
 
 	private Scanner scanner = new Scanner(System.in);
+    String PURPLE = "\033[35m"; 
+    String BLACK   = "\033[30m";
+    String RED     = "\033[31m";
+    String GREEN   = "\033[32m";
+    String YELLOW  = "\033[33m";
+    String BLUE    = "\033[34m";
+    String MAGENTA = "\033[35m"; 
+    String CYAN    = "\033[36m";
+    String WHITE   = "\033[37m";
+
+    // Reset color back to default
+    String RESET   = "\033[0m";
+
 
 	public int showMenu() {
-		this.showTitle();
-		System.out.println("              1) Play");
-		System.out.println("              2) Scoreboard");
-		System.out.println("              3) Settings");
-		System.out.println("              4) Quit");
-		System.out.println("========================================");
-		System.out.print("Select an option: ");
+	    this.showTitle();
+	    System.out.println("              1) Play");
+	    System.out.println("              2) Scoreboard");
+	    System.out.println("              3) Settings");
+	    System.out.println("              4) Quit");
+	    System.out.println("========================================");
+	    System.out.print("Select an option: ");
 
-		int choice = -1;
-		if (scanner.hasNextInt()) {
-			choice = scanner.nextInt();
-			scanner.nextLine(); // consume the newline
-		} else {
-			scanner.nextLine(); // **consume invalid input**
-		}
-		return choice;
+	    int choice = -1;
+	    if (scanner.hasNextInt()) {
+	        choice = scanner.nextInt();
+	        scanner.nextLine(); // consume the newline
+	    } else {
+	        scanner.nextLine(); // **consume invalid input**
+	    }
+	    return choice;
 	}
 
+	
+	public void showTitle() { // Title in purple
 
-	public void showTitle() { // Title
-		System.out.println("========================================");
-		System.out.println("         ____  _                         ");
-		System.out.println("        / ___|(_)_ __ ___   ___ _ __     ");
-		System.out.println("        \\___ \\| | '_ ` _ \\ /   \\ '_ \\ ");
-		System.out.println("         ___) | | | | | | |  |  || | |   ");
-		System.out.println("        |____/|_|_| |_| |_|\\___/_| |_|   ");
-		System.out.println();
-		System.out.println("           S I M O N   S W I F T          ");
-		System.out.println("========================================");
+	    System.out.println(PURPLE + "========================================" + RESET);
+	    System.out.println(PURPLE + "         ____  _                         " + RESET);
+	    System.out.println(PURPLE + "        / ___|(_)_ __ ___   ___ _ __     " + RESET);
+	    System.out.println(PURPLE + "        \\___ \\| | '_ ` _ \\ /   \\ '_ \\ " + RESET);
+	    System.out.println(PURPLE + "         ___) | | | | | | |  |  || | |   " + RESET);
+	    System.out.println(PURPLE + "        |____/|_|_| |_| |_|\\___/_| |_|   " + RESET);
+	    System.out.println();
+	    System.out.println(PURPLE + "           S I M O N   S W I F T          " + RESET);
+	    System.out.println(PURPLE + "========================================" + RESET);
 	}
+
 
 	public void showWelcome() { // Start Of Game
 		System.out.println("\n========================================");
@@ -388,80 +419,80 @@ class CLI {
 		System.out.println("Invalid option! Try again.");
 	}
 }
-
+	
 // =========================
 // SCOREBOARD CLASS
 // =========================
 class Scoreboard {
 
-	private static final String FILE_NAME = "scoreboard.txt"; // File where scores are saved
+    private static final String FILE_NAME = "scoreboard.txt"; // File where scores are saved
 
-	// Saves a new score
-	public void saveScore(String name, int score) { // Uses parameters such as name and score
-		try (FileWriter fw = new FileWriter(FILE_NAME, true)) { // Appending 
-			fw.write(name + " - " + score + "\n"); // Stores in Name - Score format
-		} catch (IOException e) {
-			e.printStackTrace(); // Error Handler
-		}
-	}
+    // Saves a new score
+    public void saveScore(String name, int score) { // Uses parameters such as name and score
+        try (FileWriter fw = new FileWriter(FILE_NAME, true)) { // Appending 
+            fw.write(name + " - " + score + "\n"); // Stores in Name - Score format
+        } catch (IOException e) {
+            e.printStackTrace(); // Error Handler
+        }
+    }
 
+    
+    // Displays the scoreboard
+    public void show() {
+    	
+        System.out.println("\n================== SCOREBOARD ==================");
 
-	// Displays the scoreboard
-	public void show() {
+        File file = new File(FILE_NAME);
+        if (!file.exists()) {
+            System.out.println("No scores yet!"); // If file doesnt exist
+            return;
+        }
 
-		System.out.println("\n================== SCOREBOARD ==================");
+        // Read all scores into a list
+        ArrayList<PlayerScore> scores = new ArrayList<>();
+        try (Scanner sc = new Scanner(file)) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                String[] parts = line.split(" - "); // Reads the name and score which is split by the -
+                if (parts.length == 2) {
+                    String name = parts[0];
+                    int score = Integer.parseInt(parts[1].trim());
+                    scores.add(new PlayerScore(name, score));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		File file = new File(FILE_NAME);
-		if (!file.exists()) {
-			System.out.println("No scores yet!"); // If file doesnt exist
-			return;
-		}
+        // Sort scores descending
+        scores.sort((a, b) -> b.score - a.score);
 
-		// Read all scores into a list
-		ArrayList<PlayerScore> scores = new ArrayList<>();
-		try (Scanner sc = new Scanner(file)) {
-			while (sc.hasNextLine()) {
-				String line = sc.nextLine();
-				String[] parts = line.split(" - "); // Reads the name and score which is split by the -
-				if (parts.length == 2) {
-					String name = parts[0];
-					int score = Integer.parseInt(parts[1].trim());
-					scores.add(new PlayerScore(name, score));
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        // Print table header
+        System.out.printf("%-4s | %-20s | %s%n", "Rank", "Player Name", "Score"); //Uses format string - (Left aligned), Field Size, d = integer s = string and n = new line character
+        System.out.println("----------+---------------------------+------------");
 
-		// Sort scores descending
-		scores.sort((a, b) -> b.score - a.score);
+        // Print top scores
+        int rank = 1;
+        for (PlayerScore ps : scores) {
+            System.out.printf("%-4d | %-20s | %d%n", rank, ps.name, ps.score);
+            rank++;
+        }
 
-		// Print table header
-		System.out.printf("%-4s | %-20s | %s%n", "Rank", "Player Name", "Score"); //Uses format string - (Left aligned), Field Size, d = integer s = string and n = new line character
-		System.out.println("----------+---------------------------+------------");
+        System.out.println("==================================\n");
+    }
 
-		// Print top scores
-		int rank = 1;
-		for (PlayerScore ps : scores) {
-			System.out.printf("%-4d | %-20s | %d%n", rank, ps.name, ps.score);
-			rank++;
-		}
+    // Helper class for storing player and score
+    private static class PlayerScore {
+        String name;
+        int score;
 
-		System.out.println("==================================\n");
-	}
+        PlayerScore(String name, int score) {
+            this.name = name;
+            this.score = score;
+        }
+    }
 
-	// Helper class for storing player and score
-	private static class PlayerScore {
-		String name;
-		int score;
-
-		PlayerScore(String name, int score) {
-			this.name = name;
-			this.score = score;
-		}
-	}
-
-
+    
 }
 
 //=========================
@@ -472,16 +503,16 @@ class Settings {
 	// WIP - Work In Progress
 }
 
-
 //=========================
 //UTILITY CLASS
 //=========================
 
 class Utility {
-
+	
 	public static void clearConsole() { // One of many ways to clear console
-		System.out.print("\033[H\033[2J"); // ANSI Escape Code - Moves cursor to the top left and clears the screen
-		System.out.flush(); // Imediate Output effect
+	    System.out.print("\033[H\033[2J"); // ANSI Escape Code - Moves cursor to the top left and clears the screen
+	    System.out.flush(); // Imediate Output effect
 	}
 }
+	
 
