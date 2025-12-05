@@ -202,14 +202,13 @@ class GameLogic {
 		// 30cm untested
 		int moveTime = (int)(30.0 / speed * 1000);
 
-		int[][] colors = { Display.red, Display.green, Display.blue, Display.yellow };
+		int[] colours = new int[4];
 		Random r = new Random();
-
 		for (int i = 0; i < 4; i++) {
-			int[] c = colors[r.nextInt(4)];
-			Display.showSequence(swiftBot, c);
+			colours[i] = r.nextInt(4);
 		}
 
+		Display.showSequence(swiftBot, colours);
 		// Celebration V
 		swiftBot.move(speed, speed / 2, moveTime);
 		Thread.sleep(200);
@@ -220,9 +219,9 @@ class GameLogic {
 		swiftBot.stopMove();
 
 		for (int i = 0; i < 4; i++) {
-			int[] c = colors[r.nextInt(4)];
-			Display.showSequence(swiftBot, c);
+			colours[i] = r.nextInt(4);
 		}
+		Display.showSequence(swiftBot, colours);
 
 		swiftBot.fillUnderlights(blank);
 	}
